@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Visit History - Clinic System{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>{% if patient %}Visit History - {{ patient.name }}{% else %}All Visit Records{% endif %}</h1>
+    <p>{% if patient %}Patient consultation history{% else %}Complete record of clinic visits{% endif %}</p>
+</div>
+
+{% if patient %}
+<div class="card">
+    <div class="card-header">
+        <h2>Patient Information</h2>
+        <a href="{{ url_for('patient_details', patient_id=patient.patient_id) }}" class="btn btn-primary btn-small">View Full Profile</a>
+    </div>
+    <div class="patient-info-grid">
+        <div class="info-item">
+            <label>Patient Code</label>
+            <span class="patient-code">{{ patient.patient_code }}</span>
+        </div>
+        <div class="info-item">
+            <label>Name</label>
+            <span>{{ patient.name }}</span>
+        </div>
+        <div class="info-item">
+            <label>Contact</label>
+            <span>{{ patient.contact or '—' }}</span>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-header">
+        <h2>Actions</h2>
+        <a href="{{ url_for('record_visit') }}" class="btn btn-success">Record New Visit</a>
+    </div>
+</div>
+{% endif %}
+
+{% if visits %}
+<div class="card">
+    {% if not patient %}
+    <div class="card-header">
+        <h2>Recent Visits</h2>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Patient</th>
+                    <th>Patient Code</th>
+                    <th>Diagnosis</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for visit in visits %}
+                <tr>
+                    <td>{{ visit.visit_date }}</td>
+                    <td><a href="{{ url_for('patient_details', patient_id=visit.patient_id) }}">{{ visit.name }}</a></td>
+                    <td><span class="patient-code">{{ visit.patient_code }}</span></td>
+                    <td>{{ visit.diagnosis or '—' }}</td>
+                    <td>{{ visit.notes[:100] }}{% if visit.notes|length > 100 %}...{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-header">
+        <h2>Visit History</h2>
+    </div>
+    <div class="timeline">
+        {% for visit in visits %}
+        <div class="timeline-item">
+            <div class="timeline-date">{{ visit.visit_date }}</div>
+            <div class="timeline-content">
+                {% if visit.diagnosis %}
+                <h4>{{ visit.diagnosis }}</h4>
+                {% endif %}
+                <p>{{ visit.notes }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>{% if patient %}No visit records for this patient.{% else %}No visit records found.{% endif %}</p>
+        <a href="{{ url_for('record_visit') }}" class="btn btn-success">Record First Visit</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

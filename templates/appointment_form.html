@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'schedule' %}Schedule Appointment{% else %}Edit Appointment{% endif %} - Clinic System{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>{% if action == 'schedule' %}Schedule New Appointment{% else %}Edit Appointment{% endif %}</h1>
+    <p>{% if action == 'schedule' %}Create a new patient appointment{% else %}Update appointment details{% endif %}</p>
+</div>
+
+<div class="card form-card">
+    <form method="POST" {% if appointment and appointment.visit_date < today %}novalidate{% endif %}>
+        <div class="form-group">
+            <label for="patient-search" class="form-label">Find a patient</label>
+            <input type="search" id="patient-search" class="form-input patient-picker-search" placeholder="Search by name or patient code" autocomplete="off" data-patient-search="patient_id" aria-controls="patient_id">
+            <p class="patient-search-feedback" aria-live="polite"></p>
+            <label for="patient_id" class="form-label patient-select-label">Patient *</label>
+            <select id="patient_id" name="patient_id" class="form-select" required>
+                <option value="">Select a patient</option>
+                {% for patient in patients %}
+                <option value="{{ patient.patient_id }}" {% if appointment and appointment.patient_id == patient.patient_id %}selected{% endif %}>
+                    {{ patient.patient_code }} - {{ patient.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="visit_date" class="form-label">Date *</label>
+                <input type="date" id="visit_date" name="visit_date" class="form-input" value="{{ appointment.visit_date if appointment else '' }}" min="{{ today }}" required>
+                {% if appointment and appointment.visit_date < today %}
+                <p class="form-help">This appointment is already in the past. Keep its existing date or choose a future date.</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="time" class="form-label">Time *</label>
+                <input type="time" id="time" name="time" class="form-input" value="{{ appointment.time if appointment else '' }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="reason" class="form-label">Reason for Visit</label>
+            <textarea id="reason" name="reason" class="form-textarea">{{ appointment.reason if appointment else '' }}</textarea>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">{% if action == 'schedule' %}Schedule Appointment{% else %}Update Appointment{% endif %}</button>
+            <a href="{{ url_for('appointments') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments - Clinic System{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>Appointment Management</h1>
+    <p>Schedule and manage patient appointments</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Appointments</h2>
+        <a href="{{ url_for('schedule_appointment') }}" class="btn btn-primary">Schedule New Appointment</a>
+    </div>
+
+    <form method="GET" action="{{ url_for('appointments') }}" class="filter-bar" data-auto-submit>
+        <div class="form-group">
+            <input type="date" name="date" class="form-input" value="{{ filter_date }}" data-auto-submit-change aria-label="Filter appointments by date">
+        </div>
+        <div class="form-group">
+            <select name="status" class="form-select" data-auto-submit-change aria-label="Filter appointments by status">
+                <option value="">All Statuses</option>
+                <option value="Scheduled" {% if filter_status == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+                <option value="Completed" {% if filter_status == 'Completed' %}selected{% endif %}>Completed</option>
+                <option value="Cancelled" {% if filter_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if appointments %}
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Patient</th>
+                    <th>Patient Code</th>
+                    <th>Status</th>
+                    <th>Reason</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.visit_date }}</td>
+                    <td>{{ appointment.time }}</td>
+                    <td><a href="{{ url_for('patient_details', patient_id=appointment.patient_id) }}">{{ appointment.name }}</a></td>
+                    <td><span class="patient-code">{{ appointment.patient_code }}</span></td>
+                    <td>
+                        <span class="status-badge status-{{ appointment.status.lower() }}">{{ appointment.status }}</span>
+                    </td>
+                    <td>{{ appointment.reason or '—' }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{{ url_for('edit_appointment', appointment_id=appointment.appointment_id) }}" class="btn btn-secondary btn-small">Edit</a>
+                            {% if appointment.status == 'Scheduled' %}
+                            <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment.appointment_id) }}" onsubmit="return confirm('Cancel this appointment?');">
+                                <button type="submit" class="btn btn-danger btn-small">Cancel</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>{% if filter_date or filter_status %}No appointments found with the selected filters.{% else %}No appointments scheduled yet.{% endif %}</p>
+        <a href="{{ url_for('schedule_appointment') }}" class="btn btn-primary">Schedule First Appointment</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Patients - Clinic System{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>Patient Records</h1>
+    <p>Manage patient information</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Patient directory</h2>
+        <a href="{{ url_for('register_patient') }}" class="btn btn-primary">Register New Patient</a>
+    </div>
+
+    <form method="GET" action="{{ url_for('patients') }}" class="search-panel" data-auto-submit role="search">
+        <div class="search-field">
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+            <input type="search" id="patient-search-query" name="search" class="form-input search-input" placeholder="Search by name or patient code" value="{{ search_query }}" data-auto-submit-input data-restore-focus aria-label="Search patients">
+        </div>
+    </form>
+</div>
+
+{% if patients %}
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Patient Code</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Date of Birth</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td><span class="patient-code">{{ patient.patient_code }}</span></td>
+                    <td><a href="{{ url_for('patient_details', patient_id=patient.patient_id) }}">{{ patient.name }}</a></td>
+                    <td>{{ patient.contact or '—' }}</td>
+                    <td>{{ patient.date_of_birth or '—' }}</td>
+                    <td>
+                        <div class="action-buttons patient-actions">
+                            <a href="{{ url_for('patient_details', patient_id=patient.patient_id) }}" class="btn btn-primary btn-small">View</a>
+                            <a href="{{ url_for('edit_patient', patient_id=patient.patient_id) }}" class="btn btn-secondary btn-small">Edit</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <p>{% if search_query %}No patients found matching "{{ search_query }}".{% else %}No patients registered yet.{% endif %}</p>
+        <a href="{{ url_for('register_patient') }}" class="btn btn-primary">Register First Patient</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

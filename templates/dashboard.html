@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Clinic System{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <h1>Dashboard</h1>
+    <p>Overview of clinic operations</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2.5 21v-2a6.5 6.5 0 0 1 13 0v2zM16 4.3a4 4 0 0 1 0 7.4M18 15a5 5 0 0 1 3.5 4.8V21h-4"/></svg></span>
+        <div class="stat-label">Total Patients</div>
+        <div class="stat-value">{{ stats.total_patients }}</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3M8 17h6"/></svg></span>
+        <div class="stat-label">Total Appointments</div>
+        <div class="stat-value">{{ stats.total_appointments }}</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <div class="stat-label">Today's Appointments</div>
+        <div class="stat-value">{{ stats.todays_appointments }}</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <div class="stat-label">Completed</div>
+        <div class="stat-value">{{ stats.completed }}</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 8 8 8M16 8l-8 8"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <div class="stat-label">Cancelled</div>
+        <div class="stat-value">{{ stats.cancelled }}</div>
+    </div>
+
+    <div class="stat-card">
+        <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <div class="stat-label">Upcoming</div>
+        <div class="stat-value">{{ stats.upcoming }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Quick Actions</h2>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('register_patient') }}" class="btn btn-primary">Register New Patient</a>
+        <a href="{{ url_for('schedule_appointment') }}" class="btn btn-success">Schedule Appointment</a>
+        <a href="{{ url_for('record_visit') }}" class="btn btn-primary">Record Visit</a>
+    </div>
+</div>
+{% endblock %}
