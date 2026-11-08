@@ -48,7 +48,7 @@
 <div class="card">
     <div class="card-header">
         <h2>Appointments ({{ appointments|length }})</h2>
-        <a href="{{ url_for('schedule_appointment') }}" class="btn btn-primary btn-small">Schedule New</a>
+        <a href="{{ url_for('schedule_appointment', patient_id=patient.patient_id) }}" class="btn btn-primary btn-small">Schedule New</a>
     </div>
 
     {% if appointments %}
@@ -86,7 +86,7 @@
 <div class="card">
     <div class="card-header">
         <h2>Visit History ({{ visits|length }})</h2>
-        <a href="{{ url_for('record_visit') }}" class="btn btn-success btn-small">Record Visit</a>
+        <a href="{{ url_for('record_visit', patient_id=patient.patient_id) }}" class="btn btn-success btn-small">Record Visit</a>
     </div>
 
     {% if visits %}

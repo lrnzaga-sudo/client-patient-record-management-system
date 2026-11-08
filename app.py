@@ -11,6 +11,14 @@ app.secret_key = 'your-secret-key-change-in-production'  # Change this in produc
 # Initialize database
 db.init_db()
 
+@app.after_request
+def prevent_auth_page_caching(response):
+    if request.endpoint in {'login', 'logout'}:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 # Authentication decorator
 def login_required(f):
     @wraps(f)
@@ -33,6 +41,15 @@ def validate_patient_data(name, contact):
         errors.append('Contact number contains invalid characters.')
 
     return errors
+
+def find_patient_in_list(patients_list, patient_id):
+    if not patient_id:
+        return None
+    return next(
+        (patient for patient in patients_list
+         if str(patient['patient_id']) == str(patient_id)),
+        None
+    )
 
 def validate_appointment_data(patient_id, visit_date, time, allow_existing_date=None):
     """Validate appointment data."""
@@ -260,8 +277,10 @@ def appointments():
 @login_required
 def schedule_appointment():
     today = date.today().isoformat()
+    selected_patient_id = request.args.get('patient_id', '').strip()
     if request.method == 'POST':
         patient_id = request.form.get('patient_id', '').strip()
+        selected_patient_id = patient_id
         visit_date = request.form.get('visit_date', '').strip()
         time = request.form.get('time', '').strip()
         reason = request.form.get('reason', '').strip()
@@ -273,8 +292,11 @@ def schedule_appointment():
             for error in errors:
                 flash(error, 'error')
             patients_list = db.get_all_patients()
+            selected_patient = find_patient_in_list(patients_list, selected_patient_id)
             return render_template('appointment_form.html', action='schedule',
-                                 appointment=None, patients=patients_list, today=today)
+                                 appointment=None, patients=patients_list, today=today,
+                                 selected_patient_id=selected_patient_id,
+                                 selected_patient=selected_patient)
 
         # Create appointment
         appointment_id = db.create_appointment(
@@ -289,8 +311,11 @@ def schedule_appointment():
             flash('Failed to schedule appointment.', 'error')
 
     patients_list = db.get_all_patients()
+    selected_patient = find_patient_in_list(patients_list, selected_patient_id)
     return render_template('appointment_form.html', action='schedule',
-                         appointment=None, patients=patients_list, today=today)
+                         appointment=None, patients=patients_list, today=today,
+                         selected_patient_id=selected_patient_id,
+                         selected_patient=selected_patient)
 
 @app.route('/appointments/<int:appointment_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -359,8 +384,10 @@ def visits():
 @app.route('/visits/record', methods=['GET', 'POST'])
 @login_required
 def record_visit():
+    selected_patient_id = request.args.get('patient_id', '').strip()
     if request.method == 'POST':
         patient_id = request.form.get('patient_id', '').strip()
+        selected_patient_id = patient_id
         appointment_id = request.form.get('appointment_id', '').strip()
         visit_date = request.form.get('visit_date', '').strip()
         notes = request.form.get('notes', '').strip()
@@ -373,7 +400,10 @@ def record_visit():
             for error in errors:
                 flash(error, 'error')
             patients_list = db.get_all_patients()
-            return render_template('record_visit.html', patients=patients_list)
+            selected_patient = find_patient_in_list(patients_list, selected_patient_id)
+            return render_template('record_visit.html', patients=patients_list,
+                                   selected_patient_id=selected_patient_id,
+                                   selected_patient=selected_patient)
 
         try:
             # Use transaction if appointment_id is provided
@@ -397,7 +427,10 @@ def record_visit():
             flash(f'Transaction failed: {str(e)}', 'error')
 
     patients_list = db.get_all_patients()
-    return render_template('record_visit.html', patients=patients_list)
+    selected_patient = find_patient_in_list(patients_list, selected_patient_id)
+    return render_template('record_visit.html', patients=patients_list,
+                           selected_patient_id=selected_patient_id,
+                           selected_patient=selected_patient)
 
 @app.route('/patients/<int:patient_id>/visits')
 @login_required
