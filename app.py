@@ -374,6 +374,22 @@ def cancel_appointment(appointment_id):
 
     return redirect(url_for('appointments'))
 
+@app.route('/appointments/<int:appointment_id>/complete', methods=['POST'])
+@login_required
+def complete_appointment(appointment_id):
+    appointment = db.get_appointment_by_id(appointment_id)
+
+    if not appointment:
+        flash('Appointment not found.', 'error')
+    elif appointment['status'] != 'Scheduled':
+        flash('Only scheduled appointments can be marked as completed.', 'error')
+    elif db.update_appointment_status(appointment_id, 'Completed'):
+        flash('Appointment marked as completed.', 'success')
+    else:
+        flash('Failed to mark appointment as completed.', 'error')
+
+    return redirect(url_for('appointments'))
+
 # Visit routes
 @app.route('/visits')
 @login_required
