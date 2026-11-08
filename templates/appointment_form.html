@@ -12,13 +12,13 @@
     <form method="POST" {% if appointment and appointment.visit_date < today %}novalidate{% endif %}>
         <div class="form-group">
             <label for="patient-search" class="form-label">Find a patient</label>
-            <input type="search" id="patient-search" class="form-input patient-picker-search" placeholder="Search by name or patient code" autocomplete="off" data-patient-search="patient_id" aria-controls="patient_id">
+            <input type="search" id="patient-search" class="form-input patient-picker-search" placeholder="Search by name or patient code" value="{{ selected_patient.name if selected_patient else (appointment.name if appointment else '') }}" autocomplete="off" data-patient-search="patient_id" aria-controls="patient_id">
             <p class="patient-search-feedback" aria-live="polite"></p>
             <label for="patient_id" class="form-label patient-select-label">Patient *</label>
             <select id="patient_id" name="patient_id" class="form-select" required>
                 <option value="">Select a patient</option>
                 {% for patient in patients %}
-                <option value="{{ patient.patient_id }}" {% if appointment and appointment.patient_id == patient.patient_id %}selected{% endif %}>
+                <option value="{{ patient.patient_id }}" {% if (appointment and appointment.patient_id == patient.patient_id) or (selected_patient_id and selected_patient_id|int == patient.patient_id) %}selected{% endif %}>
                     {{ patient.patient_code }} - {{ patient.name }}
                 </option>
                 {% endfor %}

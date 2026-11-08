@@ -1,4 +1,26 @@
+window.addEventListener('pageshow', () => {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) return;
+
+    loginForm.reset();
+    loginForm.querySelectorAll('input[name="username"], input[name="password"]').forEach((field) => {
+        field.value = '';
+        field.readOnly = true;
+    });
+    if (loginForm.contains(document.activeElement)) document.activeElement.blur();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.querySelectorAll('input[name="username"], input[name="password"]').forEach((field) => {
+            field.addEventListener('focus', () => {
+                if (field.readOnly) field.value = '';
+                field.readOnly = false;
+            });
+        });
+    }
+
     const focusStorageKey = 'clinic-auto-search-focus';
     try {
         const savedFocus = JSON.parse(sessionStorage.getItem(focusStorageKey) || 'null');
@@ -58,12 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const options = Array.from(select.options).filter((option) => option.value);
         const feedback = search.parentElement.querySelector('.patient-search-feedback');
+        let previousQuery = search.value.trim().toLocaleLowerCase();
 
         const filterPatients = () => {
             const query = search.value.trim().toLocaleLowerCase();
             let matches = 0;
 
-            if (query && select.value) select.value = '';
+            if (query !== previousQuery && select.value) select.value = '';
 
             options.forEach((option) => {
                 const matched = option.textContent.toLocaleLowerCase().includes(query);
@@ -80,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     feedback.textContent = `${matches} patient${matches === 1 ? '' : 's'} found. Select one from the list below.`;
                 }
             }
+            previousQuery = query;
         };
 
         search.addEventListener('input', filterPatients);

@@ -19,15 +19,15 @@
         </div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form id="login-form" method="POST" action="{{ url_for('login') }}" autocomplete="off">
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
-                <input type="text" id="username" name="username" class="form-input" required autofocus>
+                <input type="text" id="username" name="username" class="form-input" autocomplete="off" autocapitalize="none" spellcheck="false" readonly required>
             </div>
 
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" id="password" name="password" class="form-input" required>
+                <input type="password" id="password" name="password" class="form-input" autocomplete="new-password" readonly required>
             </div>
 
             <button type="submit" class="btn btn-primary">Sign In</button>
