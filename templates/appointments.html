@@ -59,6 +59,9 @@
                         <div class="action-buttons">
                             <a href="{{ url_for('edit_appointment', appointment_id=appointment.appointment_id) }}" class="btn btn-secondary btn-small">Edit</a>
                             {% if appointment.status == 'Scheduled' %}
+                            <form method="POST" action="{{ url_for('complete_appointment', appointment_id=appointment.appointment_id) }}" onsubmit="return confirm('Mark this appointment as completed?');">
+                                <button type="submit" class="btn btn-success btn-small">Mark Complete</button>
+                            </form>
                             <form method="POST" action="{{ url_for('cancel_appointment', appointment_id=appointment.appointment_id) }}" onsubmit="return confirm('Cancel this appointment?');">
                                 <button type="submit" class="btn btn-danger btn-small">Cancel</button>
                             </form>
