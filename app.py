@@ -400,11 +400,16 @@ def visits():
 @app.route('/visits/record', methods=['GET', 'POST'])
 @login_required
 def record_visit():
+    today = date.today().isoformat()
     selected_patient_id = request.args.get('patient_id', '').strip()
+    selected_appointment_id = ''
+    visit_date = today
+    diagnosis = ''
+    notes = ''
     if request.method == 'POST':
         patient_id = request.form.get('patient_id', '').strip()
         selected_patient_id = patient_id
-        appointment_id = request.form.get('appointment_id', '').strip()
+        selected_appointment_id = request.form.get('appointment_id', '').strip()
         visit_date = request.form.get('visit_date', '').strip()
         notes = request.form.get('notes', '').strip()
         diagnosis = request.form.get('diagnosis', '').strip()
@@ -419,13 +424,16 @@ def record_visit():
             selected_patient = find_patient_in_list(patients_list, selected_patient_id)
             return render_template('record_visit.html', patients=patients_list,
                                    selected_patient_id=selected_patient_id,
-                                   selected_patient=selected_patient)
+                                   selected_patient=selected_patient,
+                                   selected_appointment_id=selected_appointment_id,
+                                   today=today, visit_date=visit_date,
+                                   diagnosis=diagnosis, notes=notes)
 
         try:
             # Use transaction if appointment_id is provided
-            if appointment_id and appointment_id != '':
+            if selected_appointment_id:
                 visit_id = db.record_visit_with_appointment(
-                    int(patient_id), int(appointment_id), visit_date, notes,
+                    int(patient_id), int(selected_appointment_id), visit_date, notes,
                     diagnosis if diagnosis else None
                 )
             else:
@@ -446,7 +454,10 @@ def record_visit():
     selected_patient = find_patient_in_list(patients_list, selected_patient_id)
     return render_template('record_visit.html', patients=patients_list,
                            selected_patient_id=selected_patient_id,
-                           selected_patient=selected_patient)
+                           selected_patient=selected_patient,
+                           selected_appointment_id=selected_appointment_id,
+                           today=today, visit_date=visit_date,
+                           diagnosis=diagnosis, notes=notes)
 
 @app.route('/patients/<int:patient_id>/visits')
 @login_required
@@ -464,6 +475,10 @@ def patient_visits(patient_id):
 @app.route('/api/patient/<int:patient_id>/appointments')
 @login_required
 def get_patient_appointments(patient_id):
+    patient = db.get_patient_by_id(patient_id)
+    if not patient:
+        return {'appointments': []}, 404
+
     appointments = db.get_appointments_by_patient(patient_id)
     # Return only scheduled appointments
     scheduled = [a for a in appointments if a['status'] == 'Scheduled']
