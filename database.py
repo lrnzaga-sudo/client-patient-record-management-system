@@ -289,8 +289,19 @@ def record_visit_with_appointment(patient_id, appointment_id, visit_date, notes,
     try:
         cursor = conn.cursor()
 
-        # Start transaction (explicit begin)
-        cursor.execute('BEGIN')
+        # Lock the appointment row for this transaction and validate its relationship
+        # before creating a visit, preventing stale or mismatched form submissions.
+        cursor.execute('BEGIN IMMEDIATE')
+        appointment = cursor.execute(
+            'SELECT patient_id, status FROM appointments WHERE appointment_id = ?',
+            (appointment_id,)
+        ).fetchone()
+        if appointment is None:
+            raise ValueError('The selected appointment no longer exists.')
+        if appointment['patient_id'] != patient_id:
+            raise ValueError('The selected appointment does not belong to this patient.')
+        if appointment['status'] != 'Scheduled':
+            raise ValueError('Only scheduled appointments can be linked to a new visit.')
 
         # Insert visit record
         cursor.execute(
@@ -304,17 +315,19 @@ def record_visit_with_appointment(patient_id, appointment_id, visit_date, notes,
         cursor.execute(
             '''UPDATE appointments
                SET status = 'Completed', updated_at = CURRENT_TIMESTAMP
-               WHERE appointment_id = ?''',
-            (appointment_id,)
+               WHERE appointment_id = ? AND patient_id = ? AND status = 'Scheduled' ''',
+            (appointment_id, patient_id)
         )
+        if cursor.rowcount != 1:
+            raise ValueError('The appointment status changed before the visit could be recorded.')
 
         # Commit transaction
         conn.commit()
         return visit_id
-    except Exception as e:
+    except Exception:
         # Rollback on error
         conn.rollback()
-        raise e
+        raise
     finally:
         conn.close()
 

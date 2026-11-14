@@ -27,27 +27,26 @@
 
         <div class="form-group">
             <label for="appointment_id" class="form-label">Related Appointment (Optional)</label>
-            <select id="appointment_id" name="appointment_id" class="form-select">
+            <select id="appointment_id" name="appointment_id" class="form-select" data-selected-appointment="{{ selected_appointment_id or '' }}" disabled>
                 <option value="">No appointment selected</option>
             </select>
-            <p class="form-help">
-                If linked to an appointment, the appointment status will be updated to Completed.
-            </p>
+            <p id="appointment-load-status" class="form-help" role="status" aria-live="polite">Choose a patient to load their scheduled appointments.</p>
+            <p class="form-help">Linking an appointment will mark it as completed when this visit is recorded.</p>
         </div>
 
         <div class="form-group">
             <label for="visit_date" class="form-label">Visit Date *</label>
-            <input type="date" id="visit_date" name="visit_date" class="form-input" value="{{ today }}" required>
+            <input type="date" id="visit_date" name="visit_date" class="form-input" value="{{ visit_date or today }}" required>
         </div>
 
         <div class="form-group">
             <label for="diagnosis" class="form-label">Diagnosis</label>
-            <input type="text" id="diagnosis" name="diagnosis" class="form-input" placeholder="e.g., Routine checkup, Common cold">
+            <input type="text" id="diagnosis" name="diagnosis" class="form-input" value="{{ diagnosis }}" placeholder="e.g., Routine checkup, Common cold">
         </div>
 
         <div class="form-group">
             <label for="notes" class="form-label">Visit Notes *</label>
-            <textarea id="notes" name="notes" class="form-textarea" required placeholder="Enter consultation notes..."></textarea>
+            <textarea id="notes" name="notes" class="form-textarea" required placeholder="Enter consultation notes...">{{ notes }}</textarea>
         </div>
 
         <div class="btn-group">
@@ -63,32 +62,58 @@
 document.addEventListener('DOMContentLoaded', function() {
     const patientSelect = document.getElementById('patient_id');
     const appointmentSelect = document.getElementById('appointment_id');
+    const appointmentStatus = document.getElementById('appointment-load-status');
+    let appointmentRequest;
 
-    patientSelect.addEventListener('change', function() {
-        const patientId = this.value;
-
-        // Clear and disable appointment select
+    function loadAppointments(patientId, selectedAppointmentId = '') {
+        if (appointmentRequest) appointmentRequest.abort();
         appointmentSelect.innerHTML = '<option value="">No appointment selected</option>';
         appointmentSelect.disabled = true;
 
-        if (patientId) {
-            // Fetch appointments for selected patient
-            fetch(`/api/patient/${patientId}/appointments`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.appointments && data.appointments.length > 0) {
-                        appointmentSelect.disabled = false;
-                        data.appointments.forEach(appointment => {
-                            const option = document.createElement('option');
-                            option.value = appointment.appointment_id;
-                            option.textContent = `${appointment.visit_date} at ${appointment.time}${appointment.reason ? ' - ' + appointment.reason : ''}`;
-                            appointmentSelect.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('Error fetching appointments:', error));
+        if (!patientId) {
+            appointmentStatus.textContent = 'Choose a patient to load their scheduled appointments.';
+            return;
         }
+
+        appointmentStatus.textContent = 'Loading scheduled appointments…';
+        appointmentRequest = new AbortController();
+        fetch(`/api/patient/${encodeURIComponent(patientId)}/appointments`, {
+            signal: appointmentRequest.signal
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Could not load appointments.');
+                return response.json();
+            })
+            .then(data => {
+                if (data.appointments.length === 0) {
+                    appointmentStatus.textContent = 'No scheduled appointments are available for this patient.';
+                    return;
+                }
+
+                data.appointments.forEach(appointment => {
+                    const option = document.createElement('option');
+                    option.value = appointment.appointment_id;
+                    option.textContent = `${appointment.visit_date} at ${appointment.time}${appointment.reason ? ' - ' + appointment.reason : ''}`;
+                    appointmentSelect.appendChild(option);
+                });
+                appointmentSelect.disabled = false;
+                if (selectedAppointmentId) appointmentSelect.value = selectedAppointmentId;
+                appointmentStatus.textContent = `${data.appointments.length} scheduled appointment${data.appointments.length === 1 ? '' : 's'} available.`;
+            })
+            .catch(error => {
+                if (error.name !== 'AbortError') {
+                    appointmentStatus.textContent = 'Could not load appointments. Please change the patient or try again.';
+                }
+            });
+    }
+
+    patientSelect.addEventListener('change', function() {
+        appointmentSelect.dataset.selectedAppointment = '';
+        loadAppointments(this.value);
     });
+
+    // A patient may already be selected when Record Visit is opened from their profile.
+    loadAppointments(patientSelect.value, appointmentSelect.dataset.selectedAppointment);
 });
 </script>
 {% endblock %}
